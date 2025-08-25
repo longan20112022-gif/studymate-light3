@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Smart Study Desk — V7 (Single-file, Offline-ready)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#071026; --card:#0f1724; --muted:#9fb0d6; --text:#e6f0ff;
+  --accent1:#60a5fa; --accent2:#34d399; --accent3:#f59e0b; --accent4:#8b5cf6;
+}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,#030417,#071024);color:var(--text);-webkit-font-smoothing:antialiased}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:50px;height:50px;border-radius:10px;background:conic-gradient(from 180deg,var(--accent1),var(--accent2),var(--accent4));display:grid;place-items:center;font-weight:800;color:#041726}
+.top-actions{display:flex;gap:8px;align-items:center}
+.btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--text);cursor:pointer}
+.btn.primary{background:var(--accent1);color:#041726;border:none;box-shadow:0 8px 20px rgba(96,165,250,0.12)}
+.container{max-width:1150px;margin:16px auto;display:grid;grid-template-columns:240px 1fr;gap:14px;padding:0 14px}
+.sidebar{background:var(--card);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);height:calc(100vh - 120px);position:sticky;top:16px;overflow:auto}
+.nav-item{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;margin-bottom:6px;cursor:pointer}
+.nav-item:hover{background:rgba(255,255,255,0.02)}
+.nav-item.active{background:linear-gradient(90deg, rgba(96,165,250,0.06), rgba(139,92,246,0.03));border-left:4px solid var(--accent1);padding-left:8px}
+.icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));font-size:18px}
+.main{min-height:70vh}
+.card{background:var(--card);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.preview{height:120px;border-radius:10px;background:linear-gradient(180deg,#071122,#0b1630);display:grid;place-items:center;border:1px dashed rgba(255,255,255,0.04)}
+.small{font-size:13px;color:var(--muted)}
+.games-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.game-card{padding:12px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
+.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,12,0.7);display:none;align-items:center;justify-content:center;z-index:9999}
+.modal{background:var(--card);border-radius:12px;padding:16px;max-width:920px;width:94%;max-height:86vh;overflow:auto;border:1px solid rgba(255,255,255,0.04)}
+.input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);margin-top:8px}
+.footer{padding:12px;text-align:center;color:var(--muted);font-size:13px;margin-top:16px}
+.badge{padding:6px 8px;border-radius:8px;font-weight:600;font-size:13px;background:linear-gradient(90deg,#60a5fa,#22d3ee);color:#04203a}
+@media(max-width:980px){ .container{grid-template-columns:1fr;}.games-grid{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="brand">
+      <div class="logo">SS</div>
+      <div>
+        <div style="font-weight:700">Smart Study Desk — V7</div>
+        <div class="small">Phiên bản thi KHKT — Single-file, mở là chạy</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div id="userArea" class="small"></div>
+      <button class="btn" id="openAuth">Đăng nhập / ĐK</button>
+      <button class="btn" id="openGuide">Hướng dẫn</button>
+      <button class="btn primary" id="startDemo">Bắt đầu</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <aside class="sidebar">
+      <div class="nav-item active" data-page="dashboard"><div class="icon">🏠</div><div><strong>Trang chủ</strong><div class="small">Tổng quan & Timer</div></div></div>
+      <div class="nav-item" data-page="guides"><div class="icon">📚</div><div><strong>Cẩm nang</strong><div class="small">Tư thế & phương pháp</div></div></div>
+      <div class="nav-item" data-page="games"><div class="icon">🎮</div><div><strong>Trò chơi (17)</strong><div class="small">Vui + điểm</div></div></div>
+      <div class="nav-item" data-page="stats"><div class="icon">📈</div><div><strong>Thống kê</strong><div class="small">Tiến bộ</div></div></div>
+      <div class="nav-item" data-page="chat"><div class="icon">🤖</div><div><strong>StudyBot</strong><div class="small">Hỏi & đáp</div></div></div>
+      <div style="height:12px"></div>
+      <div class="card small"><strong>Hồ sơ</strong><div id="profileBox" class="small" style="margin-top:8px">Chưa đăng nhập</div></div>
+      <div style="height:8px"></div>
+      <div class="card small"><strong>Chủ đề</strong><div style="margin-top:8px"><span class="badge">Toán</span> <span class="badge" style="background:linear-gradient(90deg,#34d399,#60a5fa)">Sinh</span></div></div>
+    </aside>
+
+    <main class="main">
+      <section id="dashboard" class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><h3 style="margin:0">Dashboard</h3><div class="small">Bấm Bắt đầu để chơi & ghi session</div></div>
+          <div style="text-align:right"><div class="small">Điểm: <strong id="points">0</strong></div><div class="small">KPI tuần: <strong id="kpi">0/40</strong></div></div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:12px">
+          <div style="flex:2" class="card"><h4>3 Camera (Mô phỏng)</h4><div style="display:flex;gap:8px"><div class="preview" id="cam1">Góc A<br><span class="small" id="cam1s">OK</span></div><div class="preview" id="cam2">Góc B<br><span class="small" id="cam2s">OK</span></div><div class="preview" id="cam3">Góc C<br><span class="small" id="cam3s">OK</span></div></div><div style="margin-top:8px"><button class="btn" id="simWarn">Simulate Warn</button> <button class="btn" id="simOK">Simulate OK</button></div></div>
+          <div style="flex:1" class="card"><h4>Timer</h4><div id="clock" style="font-size:34px;font-weight:700">25:00</div><div style="margin-top:8px"><button class="btn primary" id="startBtn">Bắt đầu</button> <button class="btn" id="pauseBtn">Tạm dừng</button> <button class="btn" id="stopBtn">Dừng</button></div><div style="margin-top:8px" class="small">Session hôm nay:<div id="sessionList" class="small">Chưa có</div></div></div>
+        </div>
+        <div style="margin-top:12px" class="card"><h4>Trò chơi nổi bật</h4><div class="games-grid" id="gamesGrid"></div></div>
+      </section>
+
+      <section id="guides" style="display:none" class="card">
+        <h3>Cẩm nang chi tiết</h3>
+        <div id="guideContent" class="small"></div>
+      </section>
+
+      <section id="games" style="display:none" class="card">
+        <h3>Toàn bộ 17 trò</h3>
+        <div id="allGames" class="games-grid"></div>
+        <div id="gameArea" style="margin-top:12px" class="card small">Chọn trò để bắt đầu</div>
+      </section>
+
+      <section id="stats" style="display:none" class="card">
+        <h3>Thống kê</h3>
+        <div class="small">Biểu đồ giờ học (7 ngày) & export CSV</div>
+        <div style="height:8px"></div><svg id="chart" viewBox="0 0 600 200" style="width:100%"></svg>
+        <div style="margin-top:8px"><button class="btn" id="exportCSV">Xuất CSV</button></div>
+      </section>
+
+      <section id="chat" style="display:none" class="card">
+        <h3>StudyBot (Chat)</h3>
+        <div class="small">Chat offline (rule-based). Để xài OpenAI, tạo server và đặt API key (xem hướng dẫn).</div>
+        <div id="chatBox" style="margin-top:8px" class="card small">
+          <div id="chatMessages" style="max-height:260px;overflow:auto;padding:6px"></div>
+          <input id="chatInput" class="input" placeholder="Gõ câu hỏi..." />
+          <div style="margin-top:8px"><button class="btn primary" id="sendChat">Gửi</button></div>
+        </div>
+      </section>
+
+      <section id="settings" style="display:none" class="card">
+        <h3>Cài đặt & Hồ sơ</h3>
+        <div class="small">Bạn có thể đăng ký tài khoản (email + mật khẩu) và đăng nhập. Dữ liệu lưu cục bộ (localStorage).</div>
+        <div style="margin-top:8px"><button class="btn" id="openProfile">Quản lý hồ sơ</button></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="footer">© Smart Study Desk — V7 • Offline-ready single-file prototype — Mang đi thi được</div>
+</div>
+
+<!-- Modals -->
+<div id="modal" class="modal-backdrop"><div class="modal" id="modalInner"></div></div>
+
+<script>
+/* ---------- Utilities: local storage DB for users & sessions ---------- */
+const DB = {
+  usersKey: 'ss_users_v7', // stores {email: {salt,hash,name,class,created} }
+  sessionsKey: 'ss_sessions_v7', // array of {email,start,end}
+  pointsKey: 'ss_points_v7' // {email: points}
+};
+
+function readUsers(){ try{ return JSON.parse(localStorage.getItem(DB.usersKey)||'{}'); }catch(e){return{}} }
+function writeUsers(u){ localStorage.setItem(DB.usersKey, JSON.stringify(u)); }
+function readSessions(){ try{ return JSON.parse(localStorage.getItem(DB.sessionsKey)||'[]'); }catch(e){return[]} }
+function writeSessions(s){ localStorage.setItem(DB.sessionsKey, JSON.stringify(s)); }
+function readPoints(){ try{ return JSON.parse(localStorage.getItem(DB.pointsKey)||'{}'); }catch(e){return{}} }
+function writePoints(p){ localStorage.setItem(DB.pointsKey, JSON.stringify(p)); }
+
+// Web Crypto: hash password with salt (SHA-256)
+async function hashPassword(password, salt){ const enc = new TextEncoder(); const data = enc.encode(salt + password); const hash = await crypto.subtle.digest('SHA-256', data); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function randomSalt(len=12){ const arr = new Uint8Array(len); crypto.getRandomValues(arr); return Array.from(arr).map(b=> (b%36).toString(36)).join(''); }
+
+// Current logged in user (email)
+let currentUser = localStorage.getItem('ss_current_user') || null;
+function setCurrentUser(email){ currentUser = email; if(email) localStorage.setItem('ss_current_user', email); else localStorage.removeItem('ss_current_user'); renderUserArea(); updatePointsUI(); }
+
+function renderUserArea(){
+  const ua = document.getElementById('userArea');
+  if(currentUser){ const users = readUsers(); const profile = users[currentUser] || {}; ua.innerText = profile.name ? `${profile.name} (${currentUser})` : currentUser; document.getElementById('openAuth').innerText='Đăng xuất'; }
+  else { ua.innerText='Khách'; document.getElementById('openAuth').innerText='Đăng nhập / ĐK'; }
+}
+renderUserArea();
+
+// ---------- Auth UI (register/login) ----------
+document.getElementById('openAuth').addEventListener('click', ()=>{
+  if(currentUser){ if(confirm('Đăng xuất?')){ setCurrentUser(null); alert('Đã đăng xuất'); } return; }
+  showModal('Đăng nhập / Đăng ký', authHtml(), true);
+  document.getElementById('registerBtn').addEventListener('click', async ()=>{
+    const name = document.getElementById('reg_name').value.trim(); const email = document.getElementById('reg_email').value.trim().toLowerCase();
+    const pwd = document.getElementById('reg_pwd').value;
+    if(!email || !pwd || !name){ alert('Điền đủ thông tin'); return; }
+    const users = readUsers();
+    if(users[email]){ alert('Email đã tồn tại. Vui lòng đăng nhập.'); return; }
+    const salt = randomSalt(); const hash = await hashPassword(pwd, salt);
+    users[email] = { name, salt, hash, created: Date.now(), class: document.getElementById('reg_class').value||'' };
+    writeUsers(users); setCurrentUser(email); closeModal(); alert('Đăng ký thành công!'); renderUserArea();
+  });
+  document.getElementById('loginBtn').addEventListener('click', async ()=>{
+    const email = document.getElementById('log_email').value.trim().toLowerCase(); const pwd = document.getElementById('log_pwd').value;
+    const users = readUsers(); if(!users[email]){ alert('Tài khoản không tồn tại'); return; }
+    const u = users[email]; const h = await hashPassword(pwd, u.salt); if(h===u.hash){ setCurrentUser(email); closeModal(); alert('Đăng nhập thành công'); } else alert('Mật khẩu sai'); renderUserArea();
+  });
+});
+
+function authHtml(){ return `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div>
+      <h4>Đăng ký</h4>
+      <input id="reg_name" class="input" placeholder="Họ tên" />
+      <input id="reg_class" class="input" placeholder="Lớp (ví dụ: 11A1)" />
+      <input id="reg_email" class="input" placeholder="Email" />
+      <input id="reg_pwd" class="input" type="password" placeholder="Mật khẩu" />
+      <div style="margin-top:8px"><button class="btn primary" id="registerBtn">Đăng ký</button></div>
+    </div>
+    <div>
+      <h4>Đăng nhập</h4>
+      <input id="log_email" class="input" placeholder="Email" />
+      <input id="log_pwd" class="input" type="password" placeholder="Mật khẩu" />
+      <div style="margin-top:8px"><button class="btn primary" id="loginBtn">Đăng nhập</button></div>
+    </div>
+  </div>
+`; }
+
+// ---------- Modal helpers ----------
+function showModal(title, html, wide=false){ const modal = document.getElementById('modal'); const inner = document.getElementById('modalInner'); inner.innerHTML = `<h3>${title}</h3>` + html + `<div style="text-align:right;margin-top:8px"><button class="btn" id="closeModal">Đóng</button></div>`; modal.style.display='flex'; document.getElementById('closeModal').addEventListener('click', closeModal); }
+function closeModal(){ document.getElementById('modal').style.display='none'; document.getElementById('modalInner').innerHTML=''; }
+
+// ---------- Simple theme & navigation ----------
+document.querySelectorAll('.nav-item').forEach(n=> n.addEventListener('click', ()=>{ document.querySelectorAll('.nav-item').forEach(x=> x.classList.remove('active')); n.classList.add('active'); const page = n.dataset.page; document.querySelectorAll('main section').forEach(s=> s.style.display = s.id===page ? 'block' : 'none'); if(page==='dashboard') loadDashboard(); if(page==='guides') renderGuides(); if(page==='games') renderGames(); if(page==='stats') renderStats(); if(page==='chat') initChat(); }));
+document.getElementById('openGuide').addEventListener('click', ()=> showModal('Hướng dẫn', `<div class="small">Ứng dụng chạy offline. Đăng ký tài khoản để lưu điểm & session trên trình duyệt. Xem kịch bản demo trong file hướng dẫn.</div>`));
+document.getElementById('startDemo').addEventListener('click', ()=>{ document.querySelector('[data-page="dashboard"]').click(); document.getElementById('startBtn').click(); });
+
+// ---------- Points/session helpers ----------
+function updatePointsUI(){ const pts = (readPoints()[currentUser]||0)||0; document.getElementById('points').innerText = pts; }
+function addPoints(n){ if(!currentUser){ alert('Đăng nhập để lưu điểm'); return; } const pts = readPoints(); pts[currentUser] = (pts[currentUser]||0) + n; writePoints(pts); updatePointsUI(); }
+
+// ---------- Timer & sessions ----------
+let sessionStart=null, timer=null, seconds=25*60;
+function renderClock(){ const m=String(Math.floor(seconds/60)).padStart(2,'0'); const s=String(seconds%60).padStart(2,'0'); document.getElementById('clock').innerText = m+':'+s; }
+renderClock();
+document.getElementById('startBtn').addEventListener('click', ()=>{ if(!currentUser){ if(!confirm('Bạn chưa đăng nhập. Muốn tiếp tục demo không?')) return; } if(sessionStart) return; sessionStart = Date.now(); localStorage.setItem('ss_current_session_start', String(sessionStart)); if(timer) clearInterval(timer); timer = setInterval(()=>{ if(seconds>0) seconds--; renderClock(); },1000); });
+document.getElementById('pauseBtn').addEventListener('click', ()=>{ if(timer) clearInterval(timer); timer=null; if(sessionStart){ saveSession(sessionStart, Date.now()); sessionStart=null; seconds=25*60; renderClock(); } });
+document.getElementById('stopBtn').addEventListener('click', ()=>{ if(timer) clearInterval(timer); timer=null; if(sessionStart){ saveSession(sessionStart, Date.now()); sessionStart=null; seconds=25*60; renderClock(); } });
+
+function saveSession(s,e){ if(!currentUser){ // demo save under 'guest'
+  const email = currentUser || 'guest'; const arr = readSessions(); arr.push({email, start:s, end:e}); writeSessions(arr); alert('Session đã lưu (cục bộ)'); updateSessionList(); return; } const arr = readSessions(); arr.push({email:currentUser, start:s, end:e}); writeSessions(arr); alert('Session đã lưu'); updateSessionList(); }
+function updateSessionList(){ const arr = readSessions().filter(x=> new Date(x.start).toDateString()===new Date().toDateString()); const el = document.getElementById('sessionList'); if(!arr.length) el.innerText='Chưa có session hôm nay'; else el.innerHTML = arr.map(s=>{ const st=new Date(s.start), en=new Date(s.end); return `${st.toLocaleTimeString()} - ${en.toLocaleTimeString()} (${Math.round((s.end-s.start)/60000)} phút)`; }).join('<br>'); updatePointsUI(); }
+updateSessionList();
+
+// ---------- Games (17) - simplified but interactive ----------
+const gameList = [
+  'Quick Quiz','Memory Match','Speed Math','Flashcards','Crossword Mini','Fill Blanks','Order Steps','Match Concepts',
+  'Trivia','Listening','Puzzle Emoji','Match Images','Code Challenge','Simulation Simple','Chem Lab','Bio Lab','Leaderboard'
+];
+
+function renderGames(){
+  const all = document.getElementById('allGames'); all.innerHTML=''; gameList.forEach((g,i)=>{ const el=document.createElement('div'); el.className='game-card'; el.innerHTML=`<strong>${g}</strong><div class="small">Trò ${i+1}</div>`; el.addEventListener('click', ()=> openGame(i)); all.appendChild(el); });
+  // dashboard top 6
+  const gdiv = document.getElementById('gamesGrid'); gdiv.innerHTML=''; gameList.slice(0,6).forEach((g,i)=>{ const el=document.createElement('div'); el.className='game-card'; el.innerHTML=`<strong>${g}</strong>`; el.addEventListener('click', ()=> openGame(i)); gdiv.appendChild(el); });
+}
+
+function openGame(i){
+  const area = document.getElementById('gameArea'); area.innerHTML=''; const name = gameList[i]; if(i===0) quickQuiz(area); else if(i===1) memoryMatch(area); else if(i===2) speedMath(area); else if(i===3) flashcards(area); else if(i===4) crosswordMini(area); else if(i===5) fillBlanks(area); else if(i===6) orderSteps(area); else if(i===7) matchConcepts(area); else if(i===8) trivia(area); else if(i===9) listening(area); else if(i===10) puzzleEmoji(area); else if(i===11) matchImages(area); else if(i===12) codeChallenge(area); else if(i===13) simulation(area); else if(i===14) chemLab(area); else if(i===15) bioLab(area); else leaderboard(area);
+}
+
+const sampleQ = [
+  {q:'2x+5=17, x=?', opts:['5','6','7'], a:1},
+  {q:'Pomodoro thường là?', opts:['25 phút','50 phút','15 phút'], a:0},
+  {q:'Quang hợp tạo gì?', opts:['Glucose','Oxygen','Nitrogen'], a:0},
+  {q:'Tác giả "Số đỏ" là?', opts:['Nguyễn Du','Vũ Trọng Phụng','Nam Cao'], a:1}
+];
+
+function quickQuiz(container){
+  container.innerHTML=''; const pool = sampleQ.slice().sort(()=>Math.random()-0.5).slice(0,6); let idx=0, score=0;
+  const scr = document.createElement('div'); scr.className='small'; scr.innerText='Score: 0'; container.appendChild(scr);
+  const qbox = document.createElement('div'); container.appendChild(qbox);
+  const next = document.createElement('button'); next.className='btn'; next.innerText='Câu tiếp'; next.style.marginTop='8px'; container.appendChild(next);
+  function show(){ if(idx>=pool.length){ qbox.innerHTML=`Kết thúc. Điểm: ${score}`; addPoints(score); return; } const Q = pool[idx]; qbox.innerHTML=`<div><strong>${Q.q}</strong></div>`; Q.opts.forEach((o,oi)=>{ const b=document.createElement('button'); b.className='btn'; b.style.display='block'; b.style.marginTop='6px'; b.innerText=o; b.addEventListener('click', ()=>{ if(oi===Q.a){ score+=50; scr.innerText='Score: '+score; b.style.background='linear-gradient(90deg,#34d399,#60a5fa)'; } else b.style.background='linear-gradient(90deg,#ffb86b,#ff6b6b)'; Array.from(qbox.querySelectorAll('button')).forEach(x=> x.disabled=true); }); qbox.appendChild(b); }); idx++; }
+  next.addEventListener('click', show); show();
+}
+
+function memoryMatch(container){
+  container.innerHTML=''; const pairs=[['Ty thể','ATP'],['Quang hợp','Glucose'],['Pythagoras','a^2+b^2=c^2']]; const flat = pairs.flat().sort(()=>Math.random()-0.5);
+  const grid = document.createElement('div'); grid.style.display='grid'; grid.style.gridTemplateColumns='repeat(4,1fr)'; grid.style.gap='6px'; container.appendChild(grid);
+  let first=null, matched=0;
+  flat.forEach(item=>{ const card=document.createElement('div'); card.className='card'; card.style.textAlign='center'; card.style.cursor='pointer'; card.innerText='?'; card.dataset.val=item; card.addEventListener('click', ()=>{ if(card.innerText!=='?') return; card.innerText=item; if(!first) first=card; else{ const ok = pairs.some(p=> (p[0]===first.dataset.val && p[1]===card.dataset.val) || (p[1]===first.dataset.val && p[0]===card.dataset.val)); if(ok){ first.style.background='linear-gradient(90deg,#34d399,#60a5fa)'; card.style.background='linear-gradient(90deg,#34d399,#60a5fa)'; matched++; addPoints(30); first=null; if(matched===pairs.length) addPoints(200); } else setTimeout(()=>{ first.innerText='?'; card.innerText='?'; first=null; },700); } }); grid.appendChild(card); });
+}
+
+function speedMath(container){ container.innerHTML=''; const timer = document.createElement('div'); timer.style.fontSize='24px'; timer.innerText='30'; const q = document.createElement('div'); q.style.marginTop='8px'; const input = document.createElement('input'); input.className='input'; const start = document.createElement('button'); start.className='btn primary'; start.innerText='Bắt đầu'; const score = document.createElement('div'); score.className='small'; score.innerText='0'; container.appendChild(timer); container.appendChild(q); container.appendChild(input); container.appendChild(start); container.appendChild(score);
+  let t=30, running=false, pts=0, id=null;
+  function newQ(){ const a=Math.floor(Math.random()*50)+1; const b=Math.floor(Math.random()*50)+1; if(Math.random()<0.5){ q.innerText=`${a} + ${b} = ?`; q.dataset.ans=a+b; } else { q.innerText=`${a} × ${b} = ?`; q.dataset.ans=a*b; } input.value=''; input.focus(); }
+  start.addEventListener('click', ()=>{ if(running) return; running=true; t=30; pts=0; score.innerText='0'; newQ(); id=setInterval(()=>{ t--; timer.innerText=t; if(t<=0){ clearInterval(id); running=false; addPoints(pts); } },1000); });
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter' && running){ if(Number(input.value)===Number(q.dataset.ans)){ pts+=10; score.innerText=pts; newQ(); } else newQ(); } });
+}
+
+function flashcards(container){ container.innerHTML=''; const cards=[{q:'Derivative of x^2', a:'2x'},{q:'Circle is ...', a:'Set of points equidistant from center'}]; let idx=0; const box=document.createElement('div'); box.className='card'; box.style.padding='20px'; box.innerHTML=`<div style="font-weight:700">${cards[0].q}</div><div class="small">1/${cards.length}</div>`; const btn=document.createElement('button'); btn.className='btn primary'; btn.innerText='Hiện đáp án'; btn.addEventListener('click', ()=>{ if(btn.innerText==='Hiện đáp án'){ box.innerHTML += `<div style="margin-top:8px" class="small">Đáp án: ${cards[idx].a}</div>`; btn.innerText='Tiếp'; } else { idx=(idx+1)%cards.length; box.innerHTML = `<div style="font-weight:700">${cards[idx].q}</div><div class="small">${idx+1}/${cards.length}</div>`; btn.innerText='Hiện đáp án'; } }); container.appendChild(box); container.appendChild(btn); }
+
+function crosswordMini(container){ container.innerHTML=''; const clues=[{clue:'Quá trình tạo glucose bởi cây','ans':'quanghop'},{clue:'Cơ quan tạo năng lượng','ans':'mito'}]; const form=document.createElement('div'); form.className='small'; clues.forEach((c,i)=>{ const row=document.createElement('div'); row.innerHTML=`${i+1}. ${c.clue}<br><input id="cw${i}" class="input" placeholder="nhập đáp án">`; form.appendChild(row); }); const check=document.createElement('button'); check.className='btn'; check.innerText='Kiểm tra'; const res=document.createElement('div'); res.className='small'; check.addEventListener('click', ()=>{ let ok=true; clues.forEach((c,i)=>{ const v=document.getElementById('cw'+i).value.trim().toLowerCase().replace(/\s+/g,''); if(!v || c.ans.indexOf(v)===-1) ok=false; }); res.innerText = ok ? 'Hoàn thành! +40 điểm' : 'Có lỗi, thử lại.'; if(ok) addPoints(40); }); container.appendChild(form); container.appendChild(check); container.appendChild(res); }
+
+function fillBlanks(container){ container.innerHTML=''; const q='Quá trình ___ xảy ra ở lá cây.'; const el=document.createElement('div'); el.className='small'; el.innerHTML=`${q}<br><input id="fb" class="input" placeholder="nhập từ"> <button class="btn" id="fbCheck">Kiểm tra</button><div id="fbRes" class="small"></div>`; container.appendChild(el); el.querySelector('#fbCheck').addEventListener('click', ()=>{ const v=document.getElementById('fb').value.trim().toLowerCase(); if(v.includes('quang')){ document.getElementById('fbRes').innerText='Đúng +30 điểm'; addPoints(30);} else document.getElementById('fbRes').innerText='Sai, gợi ý: bắt đầu bằng "quang"'; }); }
+
+function orderSteps(container){ container.innerHTML=''; const steps=['Lập mục tiêu','Học có chủ đích','Đánh giá kết quả','Lên kế hoạch']; const list = document.createElement('div'); list.className='small'; steps.forEach((s,i)=>{ const r=document.createElement('div'); r.className='card'; r.style.marginBottom='6px'; r.innerText=`${i+1}. ${s}`; list.appendChild(r); }); const btn=document.createElement('button'); btn.className='btn'; btn.innerText='Hoàn thành (drag demo)'; btn.addEventListener('click', ()=>{ addPoints(20); alert('Ghi nhận +20 điểm (drag/drop có thể bổ sung)'); }); container.appendChild(list); container.appendChild(btn); }
+
+function matchConcepts(container){ container.innerHTML=''; const left=['Mitochondria','Photosynthesis']; const right=['ATP','Glucose']; const wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.gap='8px'; left.forEach((l,i)=>{ const a=document.createElement('div'); a.className='card'; a.innerText=l; wrap.appendChild(a); }); right.forEach((r,i)=>{ const b=document.createElement('div'); b.className='card'; b.innerText=right[i]; wrap.appendChild(b); }); const btn=document.createElement('button'); btn.className='btn'; btn.innerText='Hoàn thành'; btn.addEventListener('click', ()=>{ addPoints(30); alert('Ghép khái niệm +30 điểm'); }); container.appendChild(wrap); container.appendChild(btn); }
+
+function trivia(container){ container.innerHTML=''; const q = sampleQ[Math.floor(Math.random()*sampleQ.length)]; const qel=document.createElement('div'); qel.innerHTML=`<strong>${q.q}</strong>`; container.appendChild(qel); q.opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='btn'; b.style.display='block'; b.style.marginTop='6px'; b.innerText=o; b.addEventListener('click', ()=>{ if(i===q.a){ addPoints(50); alert('Đúng +50 điểm'); } else alert('Sai! Đáp án: '+q.opts[q.a]); }); container.appendChild(b); }); }
+
+function listening(container){ container.innerHTML=''; const sentence='Quang hợp xảy ra ở lá cây.'; const play=document.createElement('button'); play.className='btn primary'; play.innerText='Nghe câu'; const input=document.createElement('input'); input.className='input'; input.placeholder='Gõ lại câu'; const chk=document.createElement('button'); chk.className='btn'; chk.innerText='Kiểm tra'; container.appendChild(play); container.appendChild(input); container.appendChild(chk);
+  play.addEventListener('click', ()=>{ if('speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(sentence); u.lang='vi-VN'; speechSynthesis.speak(u);} else alert('Trình duyệt không hỗ trợ TTS'); });
+  chk.addEventListener('click', ()=>{ if(input.value.toLowerCase().includes('quang')){ addPoints(20); alert('Đúng +20 điểm'); } else alert('Sai'); });
+}
+
+function puzzleEmoji(container){ container.innerHTML=''; const pieces=['🔬','🌱','📐','⚗️','🧪','🧬'].sort(()=>Math.random()-0.5); const grid=document.createElement('div'); grid.style.display='grid'; grid.style.gridTemplateColumns='repeat(3,1fr)'; grid.style.gap='6px'; pieces.forEach(p=>{ const c=document.createElement('div'); c.className='card'; c.style.fontSize='28px'; c.style.textAlign='center'; c.innerText=p; c.addEventListener('click', ()=>{ addPoints(5); c.style.opacity=0.4; }); grid.appendChild(c); }); container.appendChild(grid); }
+
+function matchImages(container){ container.innerHTML=''; const pairs=[['☀️','Photosynthesis'],['⚡','Electricity']]; pairs.forEach(p=>{ const wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.gap='8px'; const a=document.createElement('div'); a.className='card'; a.innerText=p[0]; const b=document.createElement('div'); b.className='card'; b.innerText=p[1]; wrap.appendChild(a); wrap.appendChild(b); container.appendChild(wrap); }); const btn=document.createElement('button'); btn.className='btn'; btn.innerText='Hoàn thành'; btn.addEventListener('click', ()=> addPoints(25)); container.appendChild(btn); }
+
+function codeChallenge(container){ container.innerHTML=''; const ta=document.createElement('textarea'); ta.className='input'; ta.style.height='120px'; ta.placeholder='Nhập mã JS (ví dụ: 1+2)'; const run=document.createElement('button'); run.className='btn primary'; run.innerText='Chạy'; const out=document.createElement('div'); out.className='small'; run.addEventListener('click', ()=>{ try{ const res = Function('"use strict";return ('+ta.value+')')(); out.innerText='Kết quả: '+String(res); addPoints(40); }catch(e){ out.innerText='Lỗi: '+e.message; } }); container.appendChild(ta); container.appendChild(run); container.appendChild(out); }
+
+function simulation(container){ container.innerHTML=''; const slider=document.createElement('input'); slider.type='range'; slider.min=1; slider.max=20; slider.value=9; const area=document.createElement('div'); area.style.height='120px'; area.style.position='relative'; area.style.background='linear-gradient(180deg,#071122,#071833)'; const ball=document.createElement('div'); ball.style.width='28px'; ball.style.height='28px'; ball.style.borderRadius='50%'; ball.style.background='linear-gradient(90deg,#f59e0b,#fb7185)'; ball.style.position='absolute'; ball.style.left='50%'; ball.style.transform='translateX(-50%)'; ball.style.top='10%'; area.appendChild(ball); slider.addEventListener('input', ()=>{ const g=Number(slider.value); ball.style.top = (10 + (20-g)*4) + '%'; }); container.appendChild(slider); container.appendChild(area); addPoints(10); }
+
+function chemLab(container){ container.innerHTML=''; const sel=document.createElement('select'); ['NaCl','HCl','NaOH','Phenolphthalein'].forEach(o=>{ const opt=document.createElement('option'); opt.value=o; opt.innerText=o; sel.appendChild(opt); }); const btn=document.createElement('button'); btn.className='btn'; btn.innerText='Thêm'; const res=document.createElement('div'); res.className='small'; btn.addEventListener('click', ()=>{ if(sel.value==='Phenolphthalein') res.innerText='Màu hồng khi gặp NaOH'; else res.innerText='Không đổi màu'; addPoints(15); }); container.appendChild(sel); container.appendChild(btn); container.appendChild(res); }
+
+function bioLab(container){ container.innerHTML=''; const imgs=['🧬','🔬','🧪']; const wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.gap='8px'; imgs.forEach(i=>{ const c=document.createElement('div'); c.className='card'; c.style.fontSize='28px'; c.style.textAlign='center'; c.innerText=i; c.addEventListener('click', ()=> addPoints(10)); wrap.appendChild(c); }); container.appendChild(wrap); }
+
+function leaderboard(container){ container.innerHTML=''; const pts = readPoints(); const entries = Object.keys(pts).map(k=>({email:k,pts:pts[k]})).sort((a,b)=>b.pts-a.pts); const list=document.createElement('div'); list.className='small'; entries.forEach(e=>{ const r=document.createElement('div'); r.className='card'; r.style.marginBottom='6px'; r.innerText=`${e.email} — ${e.pts} điểm`; list.appendChild(r); }); container.appendChild(list); }
+
+// ---------- Chat (local) ----------
+function initChat(){ const msgs = document.getElementById('chatMessages'); msgs.innerHTML = '<div class="small">Xin chào! Hỏi StudyBot (ví dụ: "giải thích quang hợp").</div>'; document.getElementById('sendChat').addEventListener('click', ()=>{ const q = document.getElementById('chatInput').value.trim(); if(!q) return; const el = document.createElement('div'); el.className='small'; el.style.marginTop='6px'; el.style.textAlign='right'; el.innerText='Bạn: '+q; msgs.appendChild(el); respondBot(q).then(ans=>{ const r = document.createElement('div'); r.className='small'; r.style.marginTop='6px'; r.innerText='StudyBot: '+ans; msgs.appendChild(r); msgs.scrollTop = msgs.scrollHeight; }); document.getElementById('chatInput').value=''; }); }
+async function respondBot(q){ const l = q.toLowerCase(); if(l.includes('tư thế')) return 'Tư thế chuẩn: lưng thẳng, mắt ngang màn hình, khoảng cách 50–70 cm.'; if(l.includes('quang hợp')) return 'Quang hợp: thực vật dùng ánh sáng để tạo glucose và giải phóng O2.'; if(/^[0-9\+\-\*\/\s\(\)]+$/.test(q.trim())){ try{ const v = Function('"use strict";return ('+q+')')(); return 'Kết quả: '+v; }catch(e){ return 'Không thể tính'; } } return 'Mình cần thêm thông tin hoặc bạn có thể cài OpenAI server-side để bot trả lời nâng cao.'; }
+
+// ---------- Guides & resources ----------
+function renderGuides(){ const g = document.getElementById('guideContent'); g.innerHTML=''; g.innerHTML += `<div class="card"><h4>Tư thế ngồi học</h4><ul class="small"><li>Lưng thẳng, tựa nhẹ</li><li>Mắt ngang tầm màn hình</li><li>Khoảng cách 50-70 cm</li><li>Giãn cơ 2 phút/giờ</li></ul></div>`;
+  g.innerHTML += `<div class="card"><h4>Phương pháp học</h4><div class="small"><ul><li>Pomodoro 25/5</li><li>Active Recall</li><li>Flashcards & SRS</li></ul></div></div>`;
+  g.innerHTML += `<div class="card"><h4>Tài nguyên</h4><div class="small"><a href="https://vnexpress.net" target="_blank">VnExpress</a> • <a href="https://tuoitre.vn" target="_blank">Tuổi Trẻ</a></div></div>`;
+  showSection('guides');
+}
+
+// ---------- Stats ----------
+function renderStats(){ const svg = document.getElementById('chart'); svg.innerHTML=''; const totals = computeLast7(); const w=600,h=200,p=30; const max = Math.max(...totals,1)*1.2; totals.forEach((v,i)=>{ const bw=(w-2*p)/totals.length*0.6; const x=p + i*((w-2*p)/totals.length) + ((w-2*p)/totals.length - bw)/2; const barH = (v/max)*(h-2*p); const y=(h-p)-barH; const rect=document.createElementNS('http://www.w3.org/2000/svg','rect'); rect.setAttribute('x',x); rect.setAttribute('y',y); rect.setAttribute('width',bw); rect.setAttribute('height',barH); rect.setAttribute('fill',getComputedStyle(document.documentElement).getPropertyValue('--accent1')||'#60a5fa'); svg.appendChild(rect); const txt=document.createElementNS('http://www.w3.org/2000/svg','text'); txt.setAttribute('x',x+bw/2); txt.setAttribute('y',h-8); txt.setAttribute('text-anchor','middle'); txt.setAttribute('fill','#9fb0d6'); txt.textContent=['CN','T2','T3','T4','T5','T6','T7'][i]; svg.appendChild(txt); }); updateSessionList(); updatePointsUI(); }
+
+function computeLast7(){ const sessions = readSessions(); const totals=[]; for(let i=6;i>=0;i--){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-i); const start = d.getTime(); const end = start + 24*3600*1000; let t=0; sessions.forEach(s=>{ if(s.start < end && s.end > start) t += Math.max(0, Math.min(s.end,end)-Math.max(s.start,start))/3600000; }); totals.push(Number(t.toFixed(2))); } return totals; }
+
+// ---------- Export CSV ----------
+document.getElementById('exportCSV').addEventListener('click', ()=>{ const sessions = readSessions(); let csv='email,start,end,duration_min\n'; sessions.forEach(s=> csv+= `${s.email},${new Date(s.start).toISOString()},${new Date(s.end).toISOString()},${Math.round((s.end-s.start)/60000)}\n`); const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='sessions.csv'; a.click(); URL.revokeObjectURL(url); });
+
+// ---------- Helpers ----------
+function showSection(id){ document.querySelectorAll('main section').forEach(s=> s.style.display = s.id===id ? 'block' : 'none'); document.querySelectorAll('.nav-item').forEach(n=> n.classList.toggle('active', n.dataset.page===id)); if(id==='games') renderGames(); if(id==='dashboard') updateSessionList(); if(id==='chat') initChat(); if(id==='stats') renderStats(); }
+function updatePointsUI(){ document.getElementById('points').innerText = (readPoints()[currentUser]||0) || 0; }
+
+// ---------- init ----------
+renderGames(); renderGuides(); renderStats();
+document.querySelector('[data-page="dashboard"]').click();
+
+</script>
+</body>
+</html>
