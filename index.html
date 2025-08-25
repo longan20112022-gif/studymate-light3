@@ -325,5 +325,20 @@ renderGames(); renderGuides(); renderStats();
 document.querySelector('[data-page="dashboard"]').click();
 
 </script>
-</body>
+</body> <script>
+  // Bật camera khi user bấm “Bắt đầu”
+  document.querySelector('[data-action-start]')?.addEventListener('click', () => {
+    window.visionModule?.start();
+  });
+
+  // Ví dụ nghe sự kiện để cảnh báo khi phát hiện “cell phone”
+  window.addEventListener('vision:objects', (e) => {
+    const hasPhone = e.detail?.some(p => p.class === 'cell phone' && p.score > 0.6);
+    if (hasPhone) {
+      // TODO: hiển thị banner/cộng trừ điểm trong StudyMate
+      console.warn('⚠️ Phát hiện điện thoại');
+    }
+  });
+</script>
+
 </html>
