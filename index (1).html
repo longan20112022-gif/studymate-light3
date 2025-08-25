@@ -1,0 +1,250 @@
+<!-- /index.html – StudyMate Light (vanilla, không phụ thuộc CDN) -->
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>StudyMate Light – File tổng hợp (vanilla)</title>
+    <style>
+      /* Tối giản, không dùng CDN để tránh lỗi trắng trang khi bị chặn mạng */
+      :root{--bg:#f7f7f9;--fg:#111827;--muted:#6b7280;--card:#fff;--bd:#e5e7eb;--accent:#2563eb;--green:#10b981;--amber:#f59e0b;--red:#ef4444;}
+      *{box-sizing:border-box} html,body{height:100%} body{margin:0;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--fg)}
+      .wrap{max-width:1100px;margin:0 auto;padding:16px}
+      .row{display:grid;gap:16px}
+      .row.kpi{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+      .row.cols-3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+      .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+      header.sticky{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--bd);z-index:10}
+      header .bar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+      h1{font-size:20px;margin:0}
+      .btn{appearance:none;border:1px solid var(--bd);background:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
+      .btn:hover{background:#fafafa}
+      .muted{color:var(--muted)}
+      .label{font-size:12px;color:var(--muted)}
+      .big{font-size:22px;font-weight:700}
+      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      input[type="range"]{width:100%}
+      input[type="number"], input[type="file"], input[type="text"]{width:100%;padding:6px 8px;border:1px solid var(--bd);border-radius:8px}
+      canvas{width:100%;height:320px;border:1px solid var(--bd);border-radius:14px;background:#fff}
+      footer{padding:24px 8px;text-align:center;color:var(--muted)}
+      .err{position:fixed;inset:auto 12px 12px 12px;background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;padding:10px 12px;border-radius:10px;max-width:800px}
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div class="wrap"><div class="card">Trang này cần JavaScript để hiển thị dashboard. Hãy bật JavaScript.</div></div>
+    </noscript>
+
+    <header class="sticky">
+      <div class="bar wrap">
+        <h1>StudyMate Light – Dashboard tổng hợp (vanilla)</h1>
+        <div>
+          <button id="btn-sim" class="btn">Tạm dừng mô phỏng</button>
+          <button id="btn-export" class="btn">Xuất dữ liệu</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="row kpi">
+        <div class="card"><div class="label">Độ rọi (Lux)</div><div id="kpi-lux" class="big">—</div><div id="kpi-lux-range" class="label">—</div></div>
+        <div class="card"><div class="label">LED (%)</div><div id="kpi-led" class="big">—</div><div id="kpi-led-mode" class="label">—</div></div>
+        <div class="card"><div class="label">Nhiệt độ (°C)</div><div id="kpi-temp" class="big">—</div><div class="label">22–28</div></div>
+        <div class="card"><div class="label">Độ ẩm (%)</div><div id="kpi-hum" class="big">—</div><div class="label">40–60</div></div>
+        <div class="card"><div class="label">Khoảng cách (cm)</div><div id="kpi-dist" class="big">—</div><div class="label">35–60</div></div>
+        <div class="card"><div class="label">Pomodoro</div><div id="kpi-pomo" class="big">—</div><div id="kpi-mode" class="label">—</div></div>
+      </section>
+
+      <section class="row cols-3" style="margin-top:16px">
+        <div class="card">
+          <div style="font-weight:600;margin-bottom:8px">Điều khiển đèn LED</div>
+          <label class="grid2" style="align-items:center;margin-bottom:10px">
+            <span class="label">Tự động theo Lux</span>
+            <input id="auto-led" type="checkbox" />
+          </label>
+          <input id="led-range" type="range" min="0" max="100" value="50" />
+          <div class="label" id="led-hint" style="margin-top:6px"></div>
+          <div class="grid2" style="margin-top:12px">
+            <div>
+              <div class="label">Lux min</div>
+              <input id="lux-min" type="number" min="100" max="990" value="400" />
+            </div>
+            <div>
+              <div class="label">Lux max</div>
+              <input id="lux-max" type="number" min="110" max="1000" value="600" />
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:600;margin-bottom:8px">Pomodoro</div>
+          <div id="pomo-time" class="big" style="margin-bottom:10px">—</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <button id="pomo-toggle" class="btn">Tạm dừng</button>
+            <button id="pomo-reset" class="btn">Reset</button>
+          </div>
+          <div class="grid2">
+            <div>
+              <div class="label">Tập trung (phút)</div>
+              <input id="pomo-focus" type="number" min="1" max="120" value="25" />
+            </div>
+            <div>
+              <div class="label">Nghỉ (phút)</div>
+              <input id="pomo-break" type="number" min="1" max="60" value="5" />
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:600;margin-bottom:8px">Dữ liệu</div>
+          <div class="label">Nhập/Xuất để nộp minh chứng KHKT</div>
+          <label class="label" style="display:block;margin-top:8px">Nhập JSON
+            <input id="file-in" type="file" accept="application/json" />
+          </label>
+          <button id="btn-clear" class="btn" style="margin-top:10px">Xoá lịch sử</button>
+        </div>
+      </section>
+
+      <section style="margin-top:16px">
+        <div class="card">
+          <div style="font-weight:600;margin:0 0 8px 0">Biểu đồ cảm biến (120s gần nhất)</div>
+          <canvas id="chart" width="1100" height="320"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <footer>© 2025 StudyMate Light – file tổng hợp dùng cho GitHub Pages (vanilla)</footer>
+
+    <div id="err" class="err" style="display:none"></div>
+
+    <script>
+      // Vì sao có overlay lỗi? Để nếu JS fail trên GitHub Pages, bạn thấy thông báo thay vì trắng trang.
+      const $ = (id) => document.getElementById(id);
+      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+      const fmtTime = (s) => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+
+      // State
+      let lux = 520, dist = 45, temp = 26, hum = 55;
+      let led = Number(localStorage.getItem('led') || 50);
+      let autoLed = localStorage.getItem('autoLed') !== 'false';
+      let tLuxMin = Number(localStorage.getItem('tLuxMin') || 400);
+      let tLuxMax = Number(localStorage.getItem('tLuxMax') || 600);
+      let simRunning = true;
+
+      let focusMin = Number(localStorage.getItem('focusMin') || 25);
+      let breakMin = Number(localStorage.getItem('breakMin') || 5);
+      let mode = 'focus';
+      let remain = focusMin * 60;
+      let timerRunning = true;
+
+      const history = []; // {lux, dist, temp, hum}
+
+      // UI init
+      $('auto-led').checked = autoLed;
+      $('led-range').value = led;
+      $('lux-min').value = tLuxMin; $('lux-max').value = tLuxMax;
+      $('pomo-focus').value = focusMin; $('pomo-break').value = breakMin;
+
+      // Events
+      $('btn-sim').onclick = () => { simRunning = !simRunning; $('btn-sim').textContent = simRunning ? 'Tạm dừng mô phỏng' : 'Tiếp tục mô phỏng'; };
+      $('btn-export').onclick = () => {
+        const blob = new Blob([JSON.stringify({ history }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob); const a = document.createElement('a');
+        a.href = url; a.download = 'studymate-data.json'; a.click(); URL.revokeObjectURL(url);
+      };
+      $('file-in').onchange = (e) => {
+        const f = e.target.files[0]; if(!f) return; const r = new FileReader();
+        r.onload = () => { try{ const p = JSON.parse(r.result); if(Array.isArray(p.history)){ history.length = 0; history.push(...p.history.slice(-120)); } }catch{ alert('File không hợp lệ'); } };
+        r.readAsText(f);
+      };
+      $('btn-clear').onclick = () => { history.length = 0; draw(); };
+
+      $('auto-led').onchange = (e) => { autoLed = e.target.checked; localStorage.setItem('autoLed', String(autoLed)); renderKPI(); };
+      $('led-range').oninput = (e) => { led = Number(e.target.value); localStorage.setItem('led', String(led)); renderKPI(); };
+      $('lux-min').oninput = (e) => { tLuxMin = clamp(Number(e.target.value), 100, tLuxMax-10); e.target.value = tLuxMin; localStorage.setItem('tLuxMin', String(tLuxMin)); renderKPI(); };
+      $('lux-max').oninput = (e) => { tLuxMax = clamp(Number(e.target.value), tLuxMin+10, 1000); e.target.value = tLuxMax; localStorage.setItem('tLuxMax', String(tLuxMax)); renderKPI(); };
+
+      $('pomo-toggle').onclick = () => { timerRunning = !timerRunning; $('pomo-toggle').textContent = timerRunning ? 'Tạm dừng' : 'Tiếp tục'; };
+      $('pomo-reset').onclick = () => { mode = 'focus'; remain = focusMin * 60; timerRunning = false; renderKPI(); };
+      $('pomo-focus').oninput = (e) => { focusMin = clamp(Number(e.target.value),1,120); localStorage.setItem('focusMin', String(focusMin)); if(mode==='focus' && !timerRunning) remain = focusMin*60; renderKPI(); };
+      $('pomo-break').oninput = (e) => { breakMin = clamp(Number(e.target.value),1,60); localStorage.setItem('breakMin', String(breakMin)); if(mode==='break' && !timerRunning) remain = breakMin*60; renderKPI(); };
+
+      // Simulation + timer tick
+      setInterval(() => {
+        if (simRunning) {
+          lux = clamp(lux + (Math.random()*40-20), 200, 800);
+          dist = clamp(dist + (Math.random()*6-3), 20, 90);
+          temp = clamp(temp + (Math.random()*2-1), 20, 33);
+          hum = clamp(hum + (Math.random()*4-2), 30, 75);
+          history.push({ lux, dist, temp, hum, t: Date.now() });
+          if(history.length > 120) history.shift();
+          if (autoLed) {
+            if (lux < tLuxMin) led = clamp(Math.round(led + 5), 0, 100);
+            else if (lux > tLuxMax) led = clamp(Math.round(led - 5), 0, 100);
+            $('led-range').value = String(led);
+          }
+        }
+        if (timerRunning) {
+          if (remain > 0) { remain--; } else { mode = (mode==='focus') ? 'break' : 'focus'; remain = (mode==='focus'?focusMin:breakMin)*60; }
+        }
+        renderKPI(); draw();
+      }, 1000);
+
+      // Render KPI
+      function renderKPI(){
+        $('kpi-lux').textContent = String(lux.toFixed(0));
+        $('kpi-lux-range').textContent = `${tLuxMin}-${tLuxMax}`;
+        $('kpi-led').textContent = String(led);
+        $('kpi-led-mode').textContent = autoLed ? 'auto' : 'thủ công';
+        $('led-hint').textContent = autoLed ? 'Đang tự điều chỉnh' : `Thủ công: ${led}%`;
+        $('kpi-temp').textContent = String(temp.toFixed(1));
+        $('kpi-hum').textContent = String(hum.toFixed(0));
+        $('kpi-dist').textContent = String(dist.toFixed(0));
+        $('kpi-pomo').textContent = fmtTime(remain);
+        $('kpi-mode').textContent = mode==='focus' ? 'Đang tập trung' : 'Giải lao';
+        $('pomo-time').textContent = fmtTime(remain);
+      }
+
+      // Simple canvas chart (4 lines)
+      const cvs = $('chart');
+      const ctx = cvs.getContext('2d');
+      function draw(){
+        const w = cvs.width, h = cvs.height; ctx.clearRect(0,0,w,h);
+        // axes
+        ctx.strokeStyle = '#e5e7eb'; ctx.beginPath(); for(let x=40;x<w;x+=80){ctx.moveTo(x,0);ctx.lineTo(x,h);} for(let y=20;y<h;y+=40){ctx.moveTo(0,y);ctx.lineTo(w,y);} ctx.stroke();
+        if(history.length===0) return;
+        // scale per series
+        const keys = ['lux','temp','hum','dist'];
+        const colors = {lux:'#10b981', temp:'#3b82f6', hum:'#f59e0b', dist:'#ef4444'};
+        const minMax = k => history.reduce((a,c)=>[Math.min(a[0],c[k]),Math.max(a[1],c[k])],[+Infinity,-Infinity]);
+        const pad = (min,max)=>{const d=max-min||1;return [min-d*0.1,max+d*0.1]};
+        const xStep = (w-50)/Math.max(1,history.length-1);
+        keys.forEach(k=>{
+          const [mn0,mx0]=minMax(k); const [mn,mx]=pad(mn0,mx0);
+          ctx.strokeStyle = colors[k]; ctx.beginPath();
+          history.forEach((it,i)=>{
+            const x = 25 + i*xStep; const y = h - ((it[k]-mn)/(mx-mn))*(h-20) - 10;
+            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          });
+          ctx.stroke();
+        });
+        // reference lines for Lux
+        ctx.strokeStyle = '#94a3b8'; ctx.setLineDash([6,4]); ctx.beginPath();
+        const y1 = h - ((tLuxMin - getMin('lux'))/(getMax('lux')-getMin('lux')||1))*(h-20) - 10;
+        const y2 = h - ((tLuxMax - getMin('lux'))/(getMax('lux')-getMin('lux')||1))*(h-20) - 10;
+        ctx.moveTo(0,y1); ctx.lineTo(w,y1); ctx.moveTo(0,y2); ctx.lineTo(w,y2); ctx.stroke(); ctx.setLineDash([]);
+
+        function getMin(k){return history.reduce((m,c)=>Math.min(m,c[k]),+Infinity)}
+        function getMax(k){return history.reduce((m,c)=>Math.max(m,c[k]),-Infinity)}
+      }
+
+      // First paint
+      renderKPI(); draw();
+
+      // Global error helper
+      window.addEventListener('error', (e)=>{
+        const box = $('err'); box.style.display='block'; box.textContent = 'Lỗi JS: '+ (e.message||e.error||e.filename||'không xác định');
+      });
+    </script>
+  </body>
+</html>
